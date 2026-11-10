@@ -72,6 +72,29 @@ Both executors raise `ExecutorInitError` on startup failure (e.g. Docker not
 available, pip install failed). resqui catches this and skips the plugin with a
 warning rather than aborting the whole run.
 
+### Reusing the run's repository clone
+
+Plugins that need the repository on disk should not run `git clone <url>`
+themselves — every plugin would download the same repository again. Instead,
+pass the URL as `repo_source` when creating the workspace:
+
+```python
+from resqui.workspace import create_workspace
+
+class MyPlugin(IndicatorPlugin):
+    def my_indicator(self, url, branch_or_commit):
+        with create_workspace(prefix="resqui-myplugin-", repo_source=url) as ws:
+            if branch_or_commit:
+                ws.checkout(branch_or_commit)
+            # ws.local_path contains a full copy of the repository
+            ...
+```
+
+The repository is downloaded from the network once per run; each plugin gets
+its own local copy cloned from that shared source, so tools can freely write
+into the tree without affecting other plugins. The workspace cleanup deletes
+only the plugin's copy, not the shared source.
+
 ## 3. Export from the plugins package
 
 Add an import to `src/resqui/plugins/__init__.py`:

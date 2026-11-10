@@ -38,42 +38,38 @@ class PySCN(IndicatorPlugin):
         cache_key = (url, branch)
         if cache_key in self._cache:
             return self._cache[cache_key]
-        
+
         pyscn_bin = f"{self.executor.temp_dir}/bin/pyscn"
-        
-        with create_workspace(prefix="resqui-pyscn-") as ws:
+
+        with create_workspace(prefix="resqui-pyscn-", repo_source=url) as ws:
             repo_path = Path(ws.local_path)
-            
-            subprocess.run(
-                ["git", "clone", url, ws.local_path],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
 
             if branch:
-                subprocess.run(
-                    ["git", "checkout", branch],
-                    check=True,
-                    cwd=ws.local_path,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
+                ws.checkout(branch)
 
             src_dir = repo_path / "src"
             search_base = src_dir if src_dir.is_dir() else repo_path
-            ignored_dirs = {".git", "venv", ".venv", "__pycache__", "build", "dist", ".egg-info"}
+            ignored_dirs = {
+                ".git",
+                "venv",
+                ".venv",
+                "__pycache__",
+                "build",
+                "dist",
+                ".egg-info",
+            }
 
             all_files = [
-                f for f in search_base.rglob("*")
+                f
+                for f in search_base.rglob("*")
                 if f.is_file() and not any(part in ignored_dirs for part in f.parts)
             ]
-            
+
             total_files = len(all_files)
             if total_files == 0:
                 report = {
                     "skippable": True,
-                    "reason": "El repositorio o directorio fuente está vacío."
+                    "reason": "El repositorio o directorio fuente está vacío.",
                 }
                 self._cache[cache_key] = report
                 return report
@@ -116,7 +112,9 @@ class PySCN(IndicatorPlugin):
     def cyclomatic_complexity_ok(self, url, branch=None):
         report = self.execute(url, branch)
         if report.get("skippable"):
-            return self.handle_skip("Measures cyclomatic complexity of Python functions and classes")
+            return self.handle_skip(
+                "Measures cyclomatic complexity of Python functions and classes"
+            )
 
         summary = report["summary"]
         ok = summary["average_complexity"] <= 4
@@ -125,7 +123,7 @@ class PySCN(IndicatorPlugin):
             status_id="schema:CompletedActionStatus",
             output="true" if ok else "false",
             evidence=f"Average complexity {summary['average_complexity']}; "
-                     f"{summary['high_complexity_count']} functions/classes exceed complexity 10.",
+            f"{summary['high_complexity_count']} functions/classes exceed complexity 10.",
             success=ok,
         )
 
@@ -141,14 +139,16 @@ class PySCN(IndicatorPlugin):
             status_id="schema:CompletedActionStatus",
             output="true" if ok else "false",
             evidence=f"Percentage of duplication: {summary['code_duplication_percentage']}%; "
-                     f"{summary['total_clones']} duplicated fragments.",
+            f"{summary['total_clones']} duplicated fragments.",
             success=ok,
         )
 
     def coupling_between_objects_ok(self, url, branch=None):
         report = self.execute(url, branch)
         if report.get("skippable"):
-            return self.handle_skip("Measures the coupling between objects (CBO) of the Python classes")
+            return self.handle_skip(
+                "Measures the coupling between objects (CBO) of the Python classes"
+            )
 
         summary = report["summary"]
         ok = summary["average_coupling"] <= 4
@@ -157,14 +157,16 @@ class PySCN(IndicatorPlugin):
             status_id="schema:CompletedActionStatus",
             output="true" if ok else "false",
             evidence=f"CBO average {summary['average_coupling']}; "
-                     f"{summary['high_coupling_classes']} classes exceed CBO 7.",
+            f"{summary['high_coupling_classes']} classes exceed CBO 7.",
             success=ok,
         )
 
     def internal_cohesion_ok(self, url, branch=None):
         report = self.execute(url, branch)
         if report.get("skippable"):
-            return self.handle_skip("Measures internal cohesion (LCOM4) of Python classes")
+            return self.handle_skip(
+                "Measures internal cohesion (LCOM4) of Python classes"
+            )
 
         summary = report["summary"]
         ok = summary["average_lcom"] <= 4
@@ -173,6 +175,6 @@ class PySCN(IndicatorPlugin):
             status_id="schema:CompletedActionStatus",
             output="true" if ok else "false",
             evidence=f"LCOM4 average {summary['average_lcom']}; "
-                     f"{summary['high_lcom_classes']} classes exceed LCOM4 5.",
+            f"{summary['high_lcom_classes']} classes exceed LCOM4 5.",
             success=ok,
         )
