@@ -29,24 +29,12 @@ class Gitleaks(IndicatorPlugin):
     def has_no_security_leak(self, url, branch_hash_or_tag):
         report_fname = "report.json"
 
-
-        with create_workspace(prefix="resqui-gitleaks-") as workspace:
-            try:
-                subprocess.run(
-                    ["git", "clone", url, workspace.local_path],
-                    check=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            except subprocess.CalledProcessError as e:
-                print(f"Error cloning {url}: {e}")
-                raise
-
+        with create_workspace(prefix="resqui-gitleaks-", repo_source=url) as workspace:
             plugin_path = workspace.container_path("/path")
             report_path = f"{plugin_path}/{report_fname}"
-            
+
             run_args = ["--rm", *workspace.docker_mount_args("/path")]
-            
+
             p = self.executor.run(
                 ["git", plugin_path, "-r", report_path], run_args=run_args
             )

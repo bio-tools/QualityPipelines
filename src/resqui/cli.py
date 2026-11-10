@@ -21,7 +21,6 @@ import time
 import threading
 import importlib
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -29,6 +28,7 @@ import tempfile
 from resqui.core import Context, Summary
 from resqui.markdown_report import convert as json_to_markdown
 from resqui.config import Configuration
+from resqui.workspace import clear_workspace_cache, register_workspace_source
 from resqui.tools import (
     indented,
     is_zenodo_url,
@@ -179,7 +179,9 @@ def resqui():
     branch_hash_or_tag = gitinspector.current_commit_hash if branch is None else branch
 
     if temp_dir is not None:
-        shutil.rmtree(temp_dir)
+        # Hand the clone to the plugins instead of deleting it: it becomes
+        # the run's shared source, so plugins don't re-download the repo.
+        register_workspace_source(url, temp_dir)
 
     if github_token is not None:
         print("GitHub API token \033[92m✔\033[0m")
@@ -255,6 +257,8 @@ def resqui():
         print(f"\033[91m✖\033[0m {e}")
     else:
         print("\033[92m✔\033[0m")
+
+    clear_workspace_cache()
 
 
 def print_indicator_plugins():

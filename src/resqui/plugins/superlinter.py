@@ -34,18 +34,9 @@ class SuperLinter(IndicatorPlugin):
 
     def has_no_linting_issues(self, url, branch):
 
-        with create_workspace(prefix="resqui-superlinter-") as workspace:
-            try:
-                subprocess.run(
-                    ["git", "clone", url, workspace.local_path],
-                    check=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            except subprocess.CalledProcessError as e:
-                print(f"Error cloning {url}: {e}")
-                raise
-
+        with create_workspace(
+            prefix="resqui-superlinter-", repo_source=url
+        ) as workspace:
             lint_path = workspace.container_path("/tmp/lint")
 
             run_args = [
@@ -76,8 +67,7 @@ class SuperLinter(IndicatorPlugin):
 
                 summary_destination = os.path.abspath(
                     os.path.join(
-                        os.getcwd(),
-                        f"super-linter-summary-{uuid.uuid4().hex}.md"
+                        os.getcwd(), f"super-linter-summary-{uuid.uuid4().hex}.md"
                     )
                 )
 

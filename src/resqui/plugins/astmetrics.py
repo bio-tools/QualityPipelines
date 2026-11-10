@@ -9,6 +9,7 @@ from resqui.workspace import create_workspace
 
 TIMEOUT_SECONDS = 600
 
+
 class ASTMetrics(IndicatorPlugin):
     """Static code metrics with [ast-metrics](https://ast-metrics.dev).
 
@@ -17,7 +18,7 @@ class ASTMetrics(IndicatorPlugin):
 
     name = "ASTMetrics"
     version = "0.43.1"
-    id = "https://w3id.org/everse/tools/ast-metrics"  
+    id = "https://w3id.org/everse/tools/ast-metrics"
     indicators = ["maintainability_index_ok"]
     requires = []
 
@@ -33,20 +34,17 @@ class ASTMetrics(IndicatorPlugin):
             return self._cache[cache_key]
 
         bin_path = f"{self.executor.temp_dir}/bin/ast-metrics"
-        with create_workspace(prefix="resqui-astmetrics-") as ws:
-            subprocess.run(["git", "clone", "--", url, ws.local_path], check=True,
-                            timeout=TIMEOUT_SECONDS,
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        with create_workspace(prefix="resqui-astmetrics-", repo_source=url) as ws:
             if branch:
-                subprocess.run(["git", "checkout", branch], check=True, cwd=ws.local_path,
-                                timeout=TIMEOUT_SECONDS,
-                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                ws.checkout(branch)
 
             report_path = Path(ws.local_path) / "ast-metrics-report.json"
             subprocess.run(
                 [bin_path, "analyze", f"--report-json={report_path}", "."],
-                cwd=ws.local_path, timeout=TIMEOUT_SECONDS,
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                cwd=ws.local_path,
+                timeout=TIMEOUT_SECONDS,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
             report = json.loads(report_path.read_text()) if report_path.exists() else {}
 
@@ -65,11 +63,11 @@ class ASTMetrics(IndicatorPlugin):
                 success=True,
             )
         # averageMIwoc (not averageMI): the everse formula has 3 factors (Halstead,
-        # complexity, LOC), no comment bonus. It seems to match the description 
+        # complexity, LOC), no comment bonus. It seems to match the description
         # in the indicator better than averageMI.
 
         miwoc = report.get("averageMIwoc", 0)
-        ok = miwoc >= 65  # ast-metrics' own convention for "easy to maintain"  
+        ok = miwoc >= 65  # ast-metrics' own convention for "easy to maintain"
 
         # 85-100 -> easy to maintain
         # 65-84 -> moderate maintainability
@@ -80,6 +78,6 @@ class ASTMetrics(IndicatorPlugin):
             status_id="schema:CompletedActionStatus",
             output="true" if ok else "false",
             evidence=f"Average maintainability index (without comment weighting): {miwoc:.1f}/100 "
-                f"(threshold: 65 -> moderate-or-better maintainability; below 65 is considered hard to maintain).",
+            f"(threshold: 65 -> moderate-or-better maintainability; below 65 is considered hard to maintain).",
             success=ok,
         )
