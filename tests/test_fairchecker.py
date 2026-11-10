@@ -90,6 +90,50 @@ class TestFAIRCheckerPlugin(unittest.TestCase):
         self.assertFalse(report["F2A"].success)
         self.assertEqual(report["F2A"].output, "false")
 
+    @patch("resqui.plugins.fairchecker.requests.get")
+    def test_missing_indicator_raises(self, mock_get):
+        # Report containing results only for F1A: every other indicator
+        # method must raise instead of returning a bogus check.
+        only_f1a = [
+            node
+            for node in _load_example()
+            if "https://w3id.org/ftr#TestResult" not in node.get("@type", [])
+            or node["https://w3id.org/ftr#outputFromTest"][0]["@id"].endswith(
+                "/test/F1A"
+            )
+        ]
+        plugin = self._make_plugin(only_f1a)
+        mock_get.side_effect = plugin._fake_get
+
+        result = plugin.unique_ids("https://github.com/computproteomics/OmicsQ", "main")
+        self.assertEqual(result.output, "true")
+        with self.assertRaises(ValueError):
+            plugin.license_metadata(
+                "https://github.com/computproteomics/OmicsQ", "main"
+            )
+
+    @patch("resqui.plugins.fairchecker.requests.get")
+    def test_fixture_covers_all_indicators(self, mock_get):
+        plugin = self._make_plugin(_load_example())
+        mock_get.side_effect = plugin._fake_get
+
+        report = plugin.execute("https://github.com/computproteomics/OmicsQ", "main")
+        abbreviations = set(FAIRChecker.TEST_ABBREVIATIONS.values())
+        missing = abbreviations - set(report)
+        self.assertFalse(
+            missing,
+            f"fixture does not cover all FAIRChecker tests: {sorted(missing)}",
+        )
+
+    @patch("resqui.plugins.fairchecker.requests.get")
+    def test_evidence_states_requested_ref(self, mock_get):
+        plugin = self._make_plugin(_load_example())
+        mock_get.side_effect = plugin._fake_get
+
+        result = plugin.unique_ids("https://github.com/computproteomics/OmicsQ", "main")
+        self.assertIn("Requested ref main", result.evidence)
+        self.assertIn("live repository page", result.evidence)
+
 
 if __name__ == "__main__":
     unittest.main()

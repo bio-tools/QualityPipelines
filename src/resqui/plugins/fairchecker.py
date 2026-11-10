@@ -18,6 +18,12 @@ class FAIRChecker(IndicatorPlugin):
     tool, developed at IFB/Elixir France.
 
     Languages: language-independent.
+
+    FAIR-Checker has no way to assess a specific commit: its
+    /api/check/metrics_all endpoint evaluates the live repository page.
+    branch_hash_or_tag is therefore only used for cache identity within a
+    run and does not scope the results, and the evidence strings state the
+    requested ref explicitly so reports stay auditable.
     """
 
     name = "FAIRChecker"
@@ -116,6 +122,9 @@ class FAIRChecker(IndicatorPlugin):
 
         self._start_container()
 
+        # FAIR-Checker cannot assess a specific ref; the requested
+        # branch/hash is kept only for the evidence strings and the cache
+        # identity, while the tool itself evaluates the live repository page.
         url = url.removesuffix(".git")
 
         response = requests.get(
@@ -126,11 +135,11 @@ class FAIRChecker(IndicatorPlugin):
         response.raise_for_status()
         report = response.json()
 
-        results = self._parse_report(report)
+        results = self._parse_report(report, commit_hash)
         self._cache[cache_key] = results
         return results
 
-    def _parse_report(self, report):
+    def _parse_report(self, report, branch_hash_or_tag=None):
         tests = {}
         for node in report:
             if "https://w3id.org/ftr#Test" in node.get("@type", []):
@@ -182,6 +191,12 @@ class FAIRChecker(IndicatorPlugin):
                 success = True
                 output = "true"
 
+            ref_note = (
+                f" Requested ref {branch_hash_or_tag}; FAIR-Checker assesses the "
+                "live repository page, not the ref."
+                if branch_hash_or_tag
+                else ""
+            )
             evidence = (
                 f"FAIR-Checker test {test_abbreviation}"
                 + (f" ({title})" if title else "")
@@ -190,6 +205,7 @@ class FAIRChecker(IndicatorPlugin):
                 + "."
                 + (f" Test description: {description}" if description else "")
                 + (f" Evaluated at {timestamp}." if timestamp else "")
+                + ref_note
             )
 
             results[test_abbreviation] = CheckResult(
@@ -215,26 +231,56 @@ class FAIRChecker(IndicatorPlugin):
             )
         return report[abbreviation]
 
+    # Maps indicator names to FAIR-Checker test abbreviations.
+    TEST_ABBREVIATIONS = {
+        "unique_ids": "F1A",
+        "persistent_ids": "F1B",
+        "structured_metadata": "F2A",
+        "shared_vocabularies_for_metadata": "F2B",
+        "machine_readable_format": "I1",
+        "use_shared_ontologies": "I2",
+        "external_links": "I3",
+        "license_metadata": "R11",
+    }
+
     def unique_ids(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "F1A")
+        return self._indicator_checks(
+            url, branch_hash_or_tag, self.TEST_ABBREVIATIONS["unique_ids"]
+        )
 
     def persistent_ids(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "F1B")
+        return self._indicator_checks(
+            url, branch_hash_or_tag, self.TEST_ABBREVIATIONS["persistent_ids"]
+        )
 
     def structured_metadata(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "F2A")
+        return self._indicator_checks(
+            url, branch_hash_or_tag, self.TEST_ABBREVIATIONS["structured_metadata"]
+        )
 
     def shared_vocabularies_for_metadata(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "F2B")
+        return self._indicator_checks(
+            url,
+            branch_hash_or_tag,
+            self.TEST_ABBREVIATIONS["shared_vocabularies_for_metadata"],
+        )
 
     def machine_readable_format(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "I1")
+        return self._indicator_checks(
+            url, branch_hash_or_tag, self.TEST_ABBREVIATIONS["machine_readable_format"]
+        )
 
     def use_shared_ontologies(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "I2")
+        return self._indicator_checks(
+            url, branch_hash_or_tag, self.TEST_ABBREVIATIONS["use_shared_ontologies"]
+        )
 
     def external_links(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "I3")
+        return self._indicator_checks(
+            url, branch_hash_or_tag, self.TEST_ABBREVIATIONS["external_links"]
+        )
 
     def license_metadata(self, url, branch_hash_or_tag):
-        return self._indicator_checks(url, branch_hash_or_tag, "R11")
+        return self._indicator_checks(
+            url, branch_hash_or_tag, self.TEST_ABBREVIATIONS["license_metadata"]
+        )
