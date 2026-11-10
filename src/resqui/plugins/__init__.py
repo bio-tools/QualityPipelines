@@ -7,6 +7,7 @@ from .openssfscorecard import OpenSSFScorecard
 from .superlinter import SuperLinter
 from .rsfc import RSFC
 from .oebfair import OEBFAIR
+from .fairchecker import FAIRChecker
 from .astmetrics import ASTMetrics
 from .pyscn import PySCN
 
@@ -20,6 +21,7 @@ __all__ = [
     "SuperLinter",
     "RSFC",
     "OEBFAIR",
+    "FAIRChecker",
     "ASTMetrics",
     "PySCN"
 ]

@@ -1,0 +1,174 @@
+{
+    "@context": "https://w3id.org/everse/rsqa/0.0.3",
+    "@type": "SoftwareQualityAssessment",
+    "assessedSoftware": {
+        "@type": "schema:SoftwareApplication",
+        "name": "vsclust",
+        "softwareVersion": "bioconductor-3.16-119-ge0b4c03",
+        "url": "https://github.com/computproteomics/vsclust"
+    },
+    "checks": [
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/F1A"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test F1A (Unique IDs) returned score 2 for target https://github.com/computproteomics/vsclust. Test description: FAIRChecker checks that the resource identifier is a reachable URL. It's better if the URL is persistent (WebID, PURL or DOI). Evaluated at 2026-11-10T15:46:05.116429.",
+            "output": "true",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test F1A 'Unique IDs'.",
+            "raw_value": "2",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        },
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/F1B"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test F1B (Persistent IDs) returned score 0 for target https://github.com/computproteomics/vsclust. Test description: Weak : FAIR-Checker verifies that at least one namespace from identifiers.org is used in metadata.<br> Strong : FAIR-Checker verifies that the  \u201cidentifier\u201d property from DCTerms or Schema.org vocabularies is present in metadata. Evaluated at 2026-11-10T15:46:05.142882.",
+            "output": "false",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test F1B 'Persistent IDs'.",
+            "raw_value": "0",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        },
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/F2A"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test F2A (Structured metadata) returned score 0 for target https://github.com/computproteomics/vsclust. Test description: Weak: FAIR-Checker verifies that at least one RDF triple can be found in metadata.<br> Strong: it searches for at least one property in dct:title dct:description dct:accessURL dct:downloadURL dcat:endpointURL dcat:endpointDescription. Evaluated at 2026-11-10T15:46:05.152860.",
+            "output": "false",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test F2A 'Structured metadata'.",
+            "raw_value": "0",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        },
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/F2B"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test F2B (Shared vocabularies for metadata) returned score 0 for target https://github.com/computproteomics/vsclust. Test description: Weak: FAIR-Checker verifies that at least one used ontology class or property are known in major ontology registries (OLS, BioPortal, LOV, AgroPortal, EarthPortal)<br> Strong: FAIR-Checker verifies that all used ontology classes or properties are known in major ontology registries (OLS, BioPortal, LOV, AgroPortal, EarthPortal) Evaluated at 2026-11-10T15:46:05.155973.",
+            "output": "false",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test F2B 'Shared vocabularies for metadata'.",
+            "raw_value": "0",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        },
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/I1"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test I1 (Machine readable format) returned score 0 for target https://github.com/computproteomics/vsclust. Test description: FAIR-Checker verifies that at least one RDF triple can be found in metadata. Evaluated at 2026-11-10T15:46:05.173635.",
+            "output": "false",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test I1 'Machine readable format'.",
+            "raw_value": "0",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        },
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/I2"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test I2 (Use shared ontologies) returned score 0 for target https://github.com/computproteomics/vsclust. Test description: Weak: FAIR-Checker verifies that at least one used ontology class or property are known in major ontology registries (OLS, BioPortal, LOV)<br> Strong: FAIR-Checker verifies that all used ontology classes or properties are known in major ontology registries (OLS, BioPortal, LOV) Evaluated at 2026-11-10T15:46:05.176646.",
+            "output": "false",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test I2 'Use shared ontologies'.",
+            "raw_value": "0",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        },
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/I3"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test I3 (External links) returned score 0 for target https://github.com/computproteomics/vsclust. Test description: FAIR-Checker verifies that at least 3 different URL authorities are used in the URIs of RDF metadata. Evaluated at 2026-11-10T15:46:05.179964.",
+            "output": "false",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test I3 'External links'.",
+            "raw_value": "0",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        },
+        {
+            "@type": "CheckResult",
+            "assessesIndicator": {
+                "@id": "https://w3id.org/fair/principles/terms/R11"
+            },
+            "checkingSoftware": {
+                "@id": "https://w3id.org/everse/tools/fair-checker",
+                "@type": "schema:SoftwareApplication",
+                "name": "FAIRChecker",
+                "version": "0.1.0"
+            },
+            "evidence": "FAIR-Checker test R11 returned score 0 for target https://github.com/computproteomics/vsclust. Evaluated at 2026-11-10T15:46:05.189099.",
+            "output": "false",
+            "process": "FAIR-Checker evaluates the repository against FAIR principles with test R11.",
+            "raw_value": "0",
+            "status": {
+                "@id": "schema:CompletedActionStatus"
+            }
+        }
+    ],
+    "creator": {
+        "@type": "schema:Person",
+        "name": "Quality Pipeline"
+    },
+    "dateCreated": "2026-11-10T15:46:05+00:00",
+    "description": "Automated quality assessment of vsclust (e0b4c035972c320b3fc3f6e76a2a0502eb49ca57) run by resqui.",
+    "license": {
+        "@id": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "name": "Quality assessment for vsclust"
+}

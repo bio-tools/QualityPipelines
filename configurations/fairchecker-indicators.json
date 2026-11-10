@@ -1,0 +1,12 @@
+{
+  "indicators": [
+          { "name": "unique_ids", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/F1A" },
+          { "name": "persistent_ids", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/F1B" },
+          { "name": "structured_metadata", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/F2A" },
+          { "name": "shared_vocabularies_for_metadata", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/F2B" },
+          { "name": "machine_readable_format", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/I1" },
+          { "name": "use_shared_ontologies", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/I2" },
+          { "name": "external_links", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/I3" },
+          { "name": "license_metadata", "plugin": "FAIRChecker", "@id": "https://w3id.org/fair/principles/terms/R11" }
+  ]
+}
