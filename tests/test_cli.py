@@ -189,8 +189,10 @@ class TestResquiExitPaths(unittest.TestCase):
             orig_dir = os.getcwd()
             os.chdir(plain_dir)
             try:
-                with patch("sys.argv", ["resqui"]), patch("builtins.print"), patch(
-                    "resqui.cli.Configuration"
+                with (
+                    patch("sys.argv", ["resqui"]),
+                    patch("builtins.print"),
+                    patch("resqui.cli.Configuration"),
                 ):
                     with self.assertRaises(SystemExit) as cm:
                         resqui()
@@ -199,9 +201,11 @@ class TestResquiExitPaths(unittest.TestCase):
                 os.chdir(orig_dir)
 
     def test_indicators_subcommand_exits_cleanly(self):
-        with patch("sys.argv", ["resqui", "indicators"]), patch(
-            "resqui.cli.print_indicator_plugins"
-        ), patch("builtins.print"):
+        with (
+            patch("sys.argv", ["resqui", "indicators"]),
+            patch("resqui.cli.print_indicator_plugins"),
+            patch("builtins.print"),
+        ):
             with self.assertRaises(SystemExit) as cm:
                 resqui()
             self.assertEqual(cm.exception.code, 0)
@@ -408,6 +412,71 @@ class TestResquiMainPath(unittest.TestCase):
         ):
             resqui()
         self.summary.write.assert_called_once()
+
+    def test_clone_url_seeds_shared_source_for_plugins(self):
+        import resqui.workspace as workspace_module
+        from resqui.workspace import _workspace_sources
+
+        temp_dir = tempfile.mkdtemp()
+        registered = []
+        clone_calls = []
+        real_register = workspace_module.register_workspace_source
+
+        def recording_register(url, path):
+            registered.append((url, path))
+            return real_register(url, path)
+
+        def fake_cli_run(args, **kwargs):
+            clone_calls.append(list(args))
+            if args[:2] == ["git", "clone"]:
+                clone_calls[-1].append(temp_dir)
+            return MagicMock()
+
+        def fake_git_clone_local(args, **kwargs):
+            dest = args[-1]
+            if args[:2] == ["git", "clone"]:
+                os.makedirs(dest, exist_ok=True)
+            return MagicMock()
+
+        self.inspector.remote_https_url = "https://github.com/example/repo"
+        try:
+            with self._patches(
+                argv=["resqui", "-u", "https://github.com/user/repo"],
+                **{
+                    "resqui.cli.subprocess.run": MagicMock(side_effect=fake_cli_run),
+                    "resqui.cli.tempfile.mkdtemp": MagicMock(return_value=temp_dir),
+                    "resqui.cli.register_workspace_source": recording_register,
+                    "resqui.workspace.subprocess.run": MagicMock(
+                        side_effect=fake_git_clone_local
+                    ),
+                },
+            ):
+                resqui()
+                # The CLI handed its metadata clone to the plugins as the
+                # run's shared source, keyed by the https remote URL.
+                self.assertEqual(
+                    registered,
+                    [("https://github.com/example/repo", temp_dir)],
+                )
+                # clear_workspace_cache() ran at the end of the run.
+                self.assertNotIn("https://github.com/example/repo", _workspace_sources)
+            self.assertFalse(os.path.exists(temp_dir))
+        finally:
+            workspace_module.clear_workspace_cache()
+
+    def test_run_clears_workspace_cache_also_without_url(self):
+        from resqui.workspace import _workspace_sources
+
+        try:
+            with tempfile.TemporaryDirectory() as source:
+                _workspace_sources["https://github.com/example/repo"] = source
+                with self._patches():
+                    resqui()
+                self.assertFalse(os.path.exists(source))
+        finally:
+            from resqui.workspace import clear_workspace_cache
+
+            clear_workspace_cache()
 
     def test_clone_failure_propagates(self):
         import subprocess as sp

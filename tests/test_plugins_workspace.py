@@ -43,19 +43,63 @@ class TestPluginSharedWorkspace(unittest.TestCase):
         }
 
     def test_gitleaks_uses_shared_workspace_volume(self):
-        def fake_clone(args, **kwargs):
-            os.makedirs(args[3], exist_ok=True)
-            with open(os.path.join(args[3], "report.json"), "w") as f:
+        def fake_workspace_run(args, **kwargs):
+            if args[:2] == ["git", "clone"]:
+                dest = args[-1]
+                if "--bare" in args:
+                    # bare layout: refs at top level, no .git subdir
+                    for sub in ("objects", "refs"):
+                        os.makedirs(os.path.join(dest, sub), exist_ok=True)
+                    open(os.path.join(dest, "HEAD"), "w").write(
+                        "ref: refs/heads/main\n"
+                    )
+                else:
+                    os.makedirs(dest, exist_ok=True)
+            return SimpleNamespace(stdout="", stderr="")
+
+        def fake_gitleaks_run(args, **kwargs):
+            if args[:2] == ["git", "clone"]:
+                os.makedirs(args[-1], exist_ok=True)
+                return SimpleNamespace(stdout="", stderr="")
+            # In shared mode command[1] is workspace.local_path itself, so the
+            # container writing the report lands where gitleaks.py reads it.
+            report = os.path.join(run_args_holder["path"], "report.json")
+            os.makedirs(os.path.dirname(report), exist_ok=True)
+            with open(report, "w") as f:
                 json.dump([], f)
+            return SimpleNamespace(stdout="", stderr="")
 
         plugin = Gitleaks.__new__(Gitleaks)
         plugin.context = Context(github_token="token")
         plugin.executor = FakeExecutor(stderr="no leaks found")
 
+        run_args_holder = {}
+
+        def executor_run(command, run_args=None):
+            run_args_holder["path"] = command[1]
+            # In shared mode command[1] is workspace.local_path itself, so
+            # writing the report here mimics the container writing it to the
+            # mounted workspace before gitleaks.py reads it back.
+            report = os.path.join(command[1], "report.json")
+            with open(report, "w") as f:
+                json.dump([], f)
+            plugin.executor.calls.append((command, run_args))
+            return SimpleNamespace(stdout="", stderr="no leaks found")
+
+        plugin.executor.run = executor_run
+
         with tempfile.TemporaryDirectory() as root:
             with patch.dict(os.environ, self._env(root), clear=True):
-                with patch("resqui.plugins.gitleaks.subprocess.run", side_effect=fake_clone):
-                    plugin.has_no_security_leak("https://github.com/example/repo", "main")
+                with patch(
+                    "resqui.workspace.subprocess.run", side_effect=fake_workspace_run
+                ):
+                    with patch(
+                        "resqui.plugins.gitleaks.subprocess.run",
+                        side_effect=fake_gitleaks_run,
+                    ):
+                        plugin.has_no_security_leak(
+                            "https://github.com/example/repo", "main"
+                        )
 
         command, run_args = plugin.executor.calls[0]
         self.assertEqual(run_args, ["--rm", "-v", f"sqoo_resqui_work:{root}"])
@@ -69,16 +113,23 @@ class TestPluginSharedWorkspace(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as root:
             with patch.dict(os.environ, self._env(root), clear=True):
-                with patch("resqui.plugins.superlinter.subprocess.run"):
-                    plugin.has_no_linting_issues("https://github.com/example/repo", "main")
+                with patch("resqui.workspace.subprocess.run"):
+                    with patch("resqui.plugins.superlinter.subprocess.run"):
+                        plugin.has_no_linting_issues(
+                            "https://github.com/example/repo", "main"
+                        )
 
         _, run_args = plugin.executor.calls[0]
         self.assertIn("--rm", run_args)
         self.assertIn("-v", run_args)
         self.assertIn(f"sqoo_resqui_work:{root}", run_args)
         self.assertIn("-e", run_args)
-        workspace_index = run_args.index("-e", run_args.index("DEFAULT_BRANCH=main") + 1)
-        self.assertTrue(run_args[workspace_index + 1].startswith("DEFAULT_WORKSPACE=" + root))
+        workspace_index = run_args.index(
+            "-e", run_args.index("DEFAULT_BRANCH=main") + 1
+        )
+        self.assertTrue(
+            run_args[workspace_index + 1].startswith("DEFAULT_WORKSPACE=" + root)
+        )
 
     def test_rsfc_uses_shared_workspace_volume(self):
         def fake_rsfc_run(command, run_args=None):
@@ -196,7 +247,9 @@ class TestRSFCIndicatorMappings(unittest.TestCase):
         ]
         for indicator, check_id in cases:
             self.assertIn(indicator, RSFC.indicators)
-            result = getattr(plugin, indicator)("https://github.com/example/repo", "main")
+            result = getattr(plugin, indicator)(
+                "https://github.com/example/repo", "main"
+            )
             expected = report[check_id]
 
             self.assertTrue(result)
@@ -218,7 +271,9 @@ class TestRSFCIndicatorMappings(unittest.TestCase):
         ]
         for indicator, check_id in cases:
             self.assertIn(indicator, RSFC.indicators)
-            result = getattr(plugin, indicator)("https://github.com/example/repo", "main")
+            result = getattr(plugin, indicator)(
+                "https://github.com/example/repo", "main"
+            )
             expected = report[check_id]
 
             self.assertFalse(result)
