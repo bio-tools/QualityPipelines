@@ -21,9 +21,9 @@ class FAIRChecker(IndicatorPlugin):
     """
 
     name = "FAIRChecker"
-    version = "0.1.0"
+    version = "0.1"
     id = "https://w3id.org/everse/tools/fair-checker"
-    image_url = "veitveit/fair-checker"
+    image_url = "veitveit/fair-checker@sha256:c0dc5c3a332231992e1b62597572217c698e646863838827a5a15876d51c82a1"
     indicators = [
         "unique_ids",
         "persistent_ids",
@@ -56,12 +56,20 @@ class FAIRChecker(IndicatorPlugin):
         self._base_url = f"http://127.0.0.1:{port}"
         name = f"resqui-fair-checker-{port}"
         cmd = [
-            "docker", "run", "-d", "--rm",
-            "--name", name,
-            "-p", f"{port}:5000",
-            "-e", "FAIR_CHECKER_ENV=development",
-            "-e", f"SERVER_URL={self._base_url}",
-            "-v", "fair-checker-data:/data/db",
+            "docker",
+            "run",
+            "-d",
+            "--rm",
+            "--name",
+            name,
+            "-p",
+            f"{port}:5000",
+            "-e",
+            "FAIR_CHECKER_ENV=development",
+            "-e",
+            f"SERVER_URL={self._base_url}",
+            "-v",
+            "fair-checker-data:/data/db",
             self.image_url,
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -133,7 +141,8 @@ class FAIRChecker(IndicatorPlugin):
             if "https://w3id.org/ftr#TestResult" not in node.get("@type", []):
                 continue
             test_ids = [
-                entry["@id"] for entry in node.get("https://w3id.org/ftr#outputFromTest", [])
+                entry["@id"]
+                for entry in node.get("https://w3id.org/ftr#outputFromTest", [])
             ]
             if not test_ids:
                 continue
@@ -149,12 +158,16 @@ class FAIRChecker(IndicatorPlugin):
 
             value = (_values("http://www.w3.org/ns/prov#value") or [None])[0]
             title = (_test_values("http://purl.org/dc/terms/title") or [None])[0]
-            description = (_test_values("http://purl.org/dc/terms/description") or [None])[0]
+            description = (
+                _test_values("http://purl.org/dc/terms/description") or [None]
+            )[0]
             target = [
                 entry["@id"]
                 for entry in node.get("https://w3id.org/ftr#assessmentTarget", [])
             ]
-            timestamp = (_values("http://www.w3.org/ns/prov#generatedAtTime") or [None])[0]
+            timestamp = (
+                _values("http://www.w3.org/ns/prov#generatedAtTime") or [None]
+            )[0]
 
             if value is None:
                 success = False

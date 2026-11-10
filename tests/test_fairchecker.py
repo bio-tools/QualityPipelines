@@ -2,13 +2,13 @@ import json
 import os
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from resqui.core import CheckResult, Context
 from resqui.plugins.fairchecker import FAIRChecker
 
 EXAMPLE_JSON = os.path.join(
-    os.path.dirname(__file__), "..", "tmp", "fair-checker-example.json"
+    os.path.dirname(__file__), "data", "fair-checker-example.json"
 )
 
 
@@ -24,6 +24,7 @@ def _fake_requests_get_factory(report):
             json=lambda: report,
             raise_for_status=lambda: None,
         )
+
     return fake_get
 
 
@@ -48,7 +49,9 @@ class TestFAIRCheckerPlugin(unittest.TestCase):
 
         result = plugin.unique_ids("https://github.com/computproteomics/OmicsQ", "main")
 
-        self.assertIn("F1A", plugin._cache[("https://github.com/computproteomics/OmicsQ", "main")])
+        self.assertIn(
+            "F1A", plugin._cache[("https://github.com/computproteomics/OmicsQ", "main")]
+        )
         self.assertEqual(result.output, "true")
         self.assertTrue(result.success)
         self.assertEqual(result.status_id, "schema:CompletedActionStatus")
