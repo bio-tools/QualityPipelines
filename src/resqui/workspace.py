@@ -69,6 +69,21 @@ def clear_workspace_cache() -> None:
     _workspace_sources.clear()
 
 
+def register_workspace_source(url: str, path: str) -> str:
+    """Seed the run's source cache for `url` from an existing local clone.
+
+    The CLI uses this to hand its own metadata clone to the plugins, so the
+    repository is downloaded from the network only once per run. Ownership of
+    `path` moves to the cache: it is removed by clear_workspace_cache().
+    Any previously cached source for the same URL is deleted first.
+    """
+    previous_path = _workspace_sources.pop(url, None)
+    if previous_path is not None and previous_path != path:
+        shutil.rmtree(previous_path, ignore_errors=True)
+    _workspace_sources[url] = path
+    return path
+
+
 def _is_shallow(path: str) -> bool:
     """True if `path` is a shallow clone (bare or with a working tree)."""
     return os.path.exists(os.path.join(path, "shallow")) or os.path.exists(

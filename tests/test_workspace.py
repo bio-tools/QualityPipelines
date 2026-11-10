@@ -8,6 +8,7 @@ from resqui.workspace import (
     _workspace_sources,
     clear_workspace_cache,
     create_workspace,
+    register_workspace_source,
 )
 
 
@@ -200,3 +201,42 @@ class TestWorkspaceSourceCache(unittest.TestCase):
                     self.assertTrue(os.path.isdir(ws.local_path))
                     self.assertTrue(os.path.isdir(os.path.join(ws.local_path, ".git")))
         self.assertEqual(calls[-1][:2], ["git", "clone"])
+
+    def test_register_workspace_source_seeds_cache_without_cloning(self):
+        url = "https://github.com/example/repo"
+        with tempfile.TemporaryDirectory() as source:
+            register_workspace_source(url, source)
+            self.assertEqual(_workspace_sources[url], source)
+
+            calls, fake_run = self._fake_git_factory()
+            with patch.dict(os.environ, {}, clear=True):
+                with patch("resqui.workspace.subprocess.run", side_effect=fake_run):
+                    with create_workspace(prefix="t-", repo_source=url) as ws:
+                        pass
+
+        clones = [c for c in calls if c[:2] == ["git", "clone"]]
+        # Only the local workspace copy; no network clone was needed.
+        self.assertEqual(len(clones), 1)
+        self.assertEqual(clones[0][-1], ws.local_path)
+        self.assertIn(source, clones[0])
+
+    def test_register_workspace_source_replaces_previous_entry(self):
+        url = "https://github.com/example/repo"
+        calls, fake_run = self._fake_git_factory()
+        with patch.dict(os.environ, {}, clear=True):
+            with patch("resqui.workspace.subprocess.run", side_effect=fake_run):
+                with create_workspace(prefix="t-", repo_source=url):
+                    pass
+                old_source = _workspace_sources[url]
+                with tempfile.TemporaryDirectory() as new_source:
+                    register_workspace_source(url, new_source)
+                    self.assertEqual(_workspace_sources[url], new_source)
+                self.assertFalse(os.path.exists(old_source))
+
+    def test_clear_workspace_cache_removes_registered_source(self):
+        url = "https://github.com/example/repo"
+        with tempfile.TemporaryDirectory() as source:
+            register_workspace_source(url, source)
+            clear_workspace_cache()
+            self.assertFalse(os.path.exists(source))
+            self.assertEqual(_workspace_sources, {})
