@@ -28,16 +28,29 @@ attribute; each name corresponds to a method of the same name on the class.
 
 A single plugin instance is reused for all of its indicators within one run,
 which means Docker images are pulled and Python venvs are created only once
-per plugin class.
+per plugin class. Both are also reused across runs: images that are already
+present locally are not pulled again, and the Python plugins keep their venvs
+in a cache (see below).
 
 ## Executor design
 
 Plugins delegate subprocess execution to one of two executors:
 
-**`PythonExecutor`** creates a temporary `venv` via the stdlib `venv` module,
-installs the required packages with pip, and runs Python snippets inside it.
-The venv is torn down in `__del__`. This approach keeps plugin dependencies
-completely isolated from the resqui installation.
+**`PythonExecutor`** creates a `venv` via the stdlib `venv` module, installs
+the required packages with pip, and runs Python snippets inside it. This
+approach keeps plugin dependencies completely isolated from the resqui
+installation.
+
+By default the venv is temporary and torn down in `__del__`. The Python plugins
+(CFFConvert, HowFairIs, ASTMetrics, PySCN) create it with `cache=True`, so it
+is kept under `~/.cache/resqui/envs` (or `$XDG_CACHE_HOME/resqui/envs`; set
+`RESQUI_CACHE_DIR` to use another folder, e.g. one that CI restores between
+runs). A cached venv is looked up by the exact set of installed packages and
+the Python that built it, and is only built when missing, so repeat runs skip
+`pip install` entirely. Concurrent resqui processes wait for each other instead
+of building the same venv twice. Only pinned specs (`name==1.2.3`, or a git URL
+ending in `@tag`) are cached; any other spec gets a temporary venv. Cached venvs
+are never modified and never expire: to clear them, delete the `envs` folder.
 
 **`DockerExecutor`** pulls a Docker image on construction and runs commands
 inside containers via `docker run`. The Docker daemon is the only external
