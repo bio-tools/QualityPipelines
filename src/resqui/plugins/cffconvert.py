@@ -20,7 +20,7 @@ class CFFConvert(IndicatorPlugin):
 
     def __init__(self, context):
         self.context = context
-        self.executor = PythonExecutor()
+        self.executor = PythonExecutor(cache=True)
         self.executor.install(f"{self.python_package_name}=={self.version}")
 
     def has_citation(self, url, branch_hash_or_tag):
