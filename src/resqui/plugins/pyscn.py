@@ -30,7 +30,7 @@ class PySCN(IndicatorPlugin):
 
     def __init__(self, context):
         self.context = context
-        self.executor = PythonExecutor()
+        self.executor = PythonExecutor(cache=True)
         self.executor.install(f"pyscn=={self.version}")
         self._cache = {}
 

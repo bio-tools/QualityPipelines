@@ -28,7 +28,7 @@ class HowFairIs(IndicatorPlugin):
         if not context.github_token:
             raise PluginInitError("missing GITHUB_ACTION_TOKEN")
         self.executor = PythonExecutor(
-            environment={"GITHUB_ACTION_TOKEN": context.github_token}
+            environment={"GITHUB_ACTION_TOKEN": context.github_token}, cache=True
         )
         self.executor.install(self.python_package_spec)
 
