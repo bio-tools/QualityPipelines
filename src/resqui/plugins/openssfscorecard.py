@@ -3,6 +3,7 @@ import os
 import subprocess
 from resqui.plugins.base import IndicatorPlugin, PluginInitError
 from resqui.core import CheckResult
+from resqui.executors.docker import ensure_image
 
 
 class OpenSSFScorecard(IndicatorPlugin):
@@ -39,12 +40,7 @@ class OpenSSFScorecard(IndicatorPlugin):
 
     def instantiate(self):
         try:
-            subprocess.run(
-                ["docker", "pull", self.image_url],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            ensure_image(self.image_url)
         except subprocess.CalledProcessError as e:
             print(f"Error pulling OpenSSF Scorecard image: {e}")
             raise
